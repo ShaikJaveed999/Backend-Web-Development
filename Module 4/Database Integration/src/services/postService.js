@@ -1,4 +1,5 @@
 const postRepository = require('../repositories/postRepository');
+const { AppError, normalizePrismaError } = require('../utils/errors');
 
 async function listPosts() {
   return postRepository.findAll();
@@ -9,24 +10,35 @@ async function getPost(id) {
 }
 
 async function createPost(fields) {
-  if (!fields || !fields.title) {
-    const error = new Error('Title is required');
-    error.statusCode = 422;
-    throw error;
+  if (!fields || typeof fields.title !== 'string' || fields.title.trim() === '') {
+    throw new AppError('Title is required', 422);
   }
-  return postRepository.create({
-    title: fields.title,
-    body: fields.body || '',
-    authorId: fields.authorId,
-  });
+
+  try {
+    return await postRepository.create({
+      title: fields.title.trim(),
+      body: typeof fields.body === 'string' ? fields.body : '',
+      authorId: fields.authorId,
+    });
+  } catch (error) {
+    throw normalizePrismaError(error);
+  }
 }
 
 async function updatePost(id, patch) {
-  return postRepository.update(id, patch);
+  try {
+    return await postRepository.update(id, patch || {});
+  } catch (error) {
+    throw normalizePrismaError(error);
+  }
 }
 
 async function removePost(id) {
-  return postRepository.remove(id);
+  try {
+    return await postRepository.remove(id);
+  } catch (error) {
+    throw normalizePrismaError(error);
+  }
 }
 
 module.exports = { listPosts, getPost, createPost, updatePost, removePost };
