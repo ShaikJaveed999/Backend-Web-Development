@@ -105,7 +105,10 @@ module.exports = function requireRole(...allowedRoles) {
     }
     if (!allowedRoles.includes(req.user.role)) {
       return res.status(403).json({
-        error: { code: 'FORBIDDEN', message: 'Insufficient role' },
+        error: {
+          code: 'FORBIDDEN',
+          message: 'You do not have permission to perform this action',
+        },
       });
     }
     next();
@@ -147,7 +150,12 @@ function loadOwnedOrPrivileged(req, res) {
   const isOwner = post.authorId === req.user.id;
   const isPrivileged = PRIVILEGED.includes(req.user.role);
   if (!isOwner && !isPrivileged) {
-    res.status(403).json({ error: { code: 'FORBIDDEN', message: 'You do not own this resource' } });
+    res.status(403).json({
+      error: {
+        code: 'FORBIDDEN',
+        message: 'You do not have permission to modify this post',
+      },
+    });
     return null;
   }
   return post;
